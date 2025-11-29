@@ -1,0 +1,79 @@
+{
+  "name": "observ-sdk",
+  "version": "0.1.0",
+  "description": "AI tracing and semantic caching SDK for Observ",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "echo 'Add ESLint configuration for linting'",
+    "test": "echo 'Add tests'",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "observ",
+    "ai",
+    "llm",
+    "tracing",
+    "observability",
+    "caching",
+    "anthropic",
+    "openai",
+    "mistral"
+  ],
+  "author": "Observ",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/observ-ai/observ-typescript"
+  },
+  "homepage": "https://github.com/observ-ai/observ-typescript#readme",
+  "bugs": {
+    "url": "https://github.com/observ-ai/observ-typescript/issues"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.24.0",
+    "@google/generative-ai": ">=0.21.0",
+    "@mistralai/mistralai": ">=1.0.0",
+    "openai": ">=4.28.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "@google/generative-ai": {
+      "optional": true
+    },
+    "@mistralai/mistralai": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@google/generative-ai": "^0.21.0",
+    "@mistralai/mistralai": "^1.0.0",
+    "@types/node": "^20.11.0",
+    "openai": "^4.28.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
