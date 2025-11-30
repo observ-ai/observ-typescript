@@ -37,7 +37,7 @@ export class Observ implements ObservInstance {
     this.projectId = options.projectId || "default";
     this.recall = options.recall || false;
     this.environment = options.environment || "production";
-    this.endpoint = options.endpoint || "https://api.useobserv.com";
+    this.endpoint = options.endpoint || "https://api.observ.dev";
     this.debug = options.debug || false;
   }
 
@@ -134,7 +134,7 @@ export class Observ implements ObservInstance {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout for callbacks
 
-      await fetch(`${this.endpoint}/api/v1/llm/callback`, {
+      await fetch(`${this.endpoint}/v1/llm/callback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export class Observ implements ObservInstance {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout for callbacks
 
-      await fetch(`${this.endpoint}/api/v1/llm/callback`, {
+      await fetch(`${this.endpoint}/v1/llm/callback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -218,7 +218,7 @@ export class Observ implements ObservInstance {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout for callbacks
 
-      await fetch(`${this.endpoint}/api/v1/llm/callback`, {
+      await fetch(`${this.endpoint}/v1/llm/callback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

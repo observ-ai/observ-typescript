@@ -1,7 +1,7 @@
 {
   "name": "observ-sdk",
   "version": "0.1.0",
-  "description": "AI tracing and semantic caching SDK for Observ",
+  "description": "Infrastructure for cheaper, faster and more reliable LLM calls.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -64,7 +64,7 @@ export class OpenAIChatCompletionsWrapper {
 
       let response: Response;
       try {
-        response = await fetch(`${this._wt.endpoint}/api/v1/llm/complete`, {
+        response = await fetch(`${this._wt.endpoint}/v1/llm/complete`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${this._wt.apiKey}`,
