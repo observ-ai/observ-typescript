@@ -1,6 +1,6 @@
 {
   "name": "observ-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Infrastructure for cheaper, faster and more reliable LLM calls.",
   "type": "module",
   "main": "./dist/index.js",
