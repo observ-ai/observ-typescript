@@ -3,6 +3,7 @@ import {
   AnthropicMessagesWrapper,
   MistralChatCompletionsWrapper,
   OpenAIChatCompletionsWrapper,
+  VercelAIMiddleware,
 } from "./providers";
 import type { CompletionCallback } from "./providers/base";
 import type {
@@ -99,6 +100,53 @@ export class Observ implements ObservInstance {
     (client.chat.completions as any).withSessionId =
       wrapper.withSessionId.bind(wrapper);
     return client as T & MistralClient;
+  }
+
+  /**
+   * Wrap a Vercel AI SDK language model with Observ middleware
+   * Provides transparent caching and observability for any Vercel AI SDK model
+   *
+   * @example
+   * ```ts
+   * import { openai } from '@ai-sdk/openai';
+   * import { generateText } from 'ai';
+   *
+   * const observ = new Observ({ apiKey: '...', recall: true });
+   * const model = observ.wrap(openai('gpt-4'));
+   *
+   * const result = await generateText({
+   *   model,
+   *   prompt: 'Hello!'
+   * });
+   * ```
+   */
+  wrap<T>(model: T): T {
+    // Import wrapLanguageModel dynamically to avoid bundling Vercel AI SDK
+    // if users don't use this feature
+    try {
+      // Try to import from 'ai' package
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { wrapLanguageModel } = require("ai");
+
+      const middleware = new VercelAIMiddleware(this);
+
+      return wrapLanguageModel({
+        model,
+        middleware: {
+          transformParams: middleware.transformParams,
+          wrapGenerate: middleware.wrapGenerate,
+          wrapStream: middleware.wrapStream,
+        },
+      }) as T;
+    } catch (error: any) {
+      this.log(`Failed to wrap Vercel AI SDK model: ${error.message}`);
+      this.log(
+        "Make sure you have 'ai' package installed: npm install ai"
+      );
+      throw new Error(
+        "Vercel AI SDK ('ai' package) is required to use wrap() method"
+      );
+    }
   }
 
   async sendCallbackAnthropic(
