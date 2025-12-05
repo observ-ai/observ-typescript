@@ -36,4 +36,6 @@ yarn-error.log*
 
 PUBLISHING.md
 
+examples/
+
 *.test.ts
