@@ -11,9 +11,9 @@
  * - Transparent integration (no changes to generateText calls)
  */
 
-import { Observ } from "observ-sdk";
 import { openai } from "@ai-sdk/openai";
 import { generateText, streamText } from "ai";
+import { Observ } from "observ-sdk";
 
 async function main() {
   // 1. Initialize Observ with your API key
@@ -21,7 +21,6 @@ async function main() {
     apiKey: process.env.OBSERV_API_KEY || "demo-key",
     recall: true, // Enable semantic caching
     environment: "development",
-    debug: true, // Enable debug logging
   });
 
   // 2. Wrap your Vercel AI SDK model

@@ -26,6 +26,8 @@ Thumbs.db
 .env.local
 .env.*.local
 
+GATEWAY_COMPATIBILITY.md
+
 # Logs
 *.log
 npm-debug.log*
@@ -33,3 +35,5 @@ yarn-debug.log*
 yarn-error.log*
 
 PUBLISHING.md
+
+*.test.ts

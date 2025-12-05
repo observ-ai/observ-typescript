@@ -21,7 +21,8 @@
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "lint": "echo 'Add ESLint configuration for linting'",
-    "test": "echo 'Add tests'",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
