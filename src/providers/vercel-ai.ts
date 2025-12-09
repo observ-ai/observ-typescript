@@ -23,6 +23,20 @@ export class VercelAIMiddleware {
    * This runs before both generate and stream operations
    */
   transformParams = async (options: { type: string; params: any }) => {
+    // Fix tool input schemas if present
+    // Workaround for @ai-sdk/anthropic sometimes missing the "type" field in input_schema
+    // Anthropic API requires input_schema to have "type": "object"
+    if (options.params.tools) {
+      const toolNames = Object.keys(options.params.tools);
+      for (const key of toolNames) {
+        const tool = options.params.tools[key];
+        if (tool && tool.inputSchema && !tool.inputSchema.type) {
+          this._observ.log(`Fixing missing type field for tool: ${tool.name || key}`);
+          tool.inputSchema.type = 'object';
+        }
+      }
+    }
+
     // Extract observ metadata from providerOptions if present
     const observConfig = options.params.providerOptions?.observ as
       | {

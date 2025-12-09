@@ -1,30 +1,46 @@
 {
   "name": "observ-sdk",
   "version": "0.1.1",
-  "description": "Infrastructure for cheaper, faster and more reliable LLM calls.",
-  "type": "module",
+  "author": "Observ",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/observ-ai/observ-typescript"
+  },
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@google/generative-ai": "^0.21.0",
+    "@mistralai/mistralai": "^1.0.0",
+    "ai": "^5.0.106",
+    "openai": "^4.28.0",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.24.0",
+    "@google/generative-ai": ">=0.21.0",
+    "@mistralai/mistralai": ">=1.0.0",
+    "ai": ">=4.0.0",
+    "openai": ">=4.28.0"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
+  "bugs": {
+    "url": "https://github.com/observ-ai/observ-typescript/issues"
+  },
+  "description": "Infrastructure for cheaper, faster and more reliable LLM calls.",
+  "engines": {
+    "node": ">=18"
+  },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "type-check": "tsc --noEmit",
-    "lint": "echo 'Add ESLint configuration for linting'",
-    "test": "bun test",
-    "test:watch": "bun test --watch",
-    "prepublishOnly": "npm run build"
-  },
+  "homepage": "https://github.com/observ-ai/observ-typescript#readme",
   "keywords": [
     "observ",
     "ai",
@@ -36,23 +52,7 @@
     "openai",
     "mistral"
   ],
-  "author": "Observ",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/observ-ai/observ-typescript"
-  },
-  "homepage": "https://github.com/observ-ai/observ-typescript#readme",
-  "bugs": {
-    "url": "https://github.com/observ-ai/observ-typescript/issues"
-  },
-  "peerDependencies": {
-    "@anthropic-ai/sdk": ">=0.24.0",
-    "@google/generative-ai": ">=0.21.0",
-    "@mistralai/mistralai": ">=1.0.0",
-    "ai": ">=4.0.0",
-    "openai": ">=4.28.0"
-  },
   "peerDependenciesMeta": {
     "@anthropic-ai/sdk": {
       "optional": true
@@ -70,16 +70,15 @@
       "optional": true
     }
   },
-  "devDependencies": {
-    "@anthropic-ai/sdk": "^0.24.0",
-    "@google/generative-ai": "^0.21.0",
-    "@mistralai/mistralai": "^1.0.0",
-    "@types/node": "^20.11.0",
-    "ai": "^5.0.106",
-    "openai": "^4.28.0",
-    "typescript": "^5.3.3"
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "echo 'Add ESLint configuration for linting'",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "prepublishOnly": "npm run build"
   },
-  "engines": {
-    "node": ">=18"
-  }
+  "type": "module",
+  "types": "./dist/index.d.ts"
 }
