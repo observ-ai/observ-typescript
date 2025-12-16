@@ -1,8 +1,8 @@
 import type { ObservInstance } from "../observ-instance";
 import {
   buildCompletionRequest,
-  type GatewayResponse,
   type CompletionCallback,
+  type GatewayResponse,
 } from "./base";
 import { VercelMessageConverter } from "./vercel-message-converter";
 import { VercelResponseBuilder } from "./vercel-response-builder";
@@ -31,8 +31,7 @@ export class VercelAIMiddleware {
       for (const key of toolNames) {
         const tool = options.params.tools[key];
         if (tool && tool.inputSchema && !tool.inputSchema.type) {
-          this._observ.log(`Fixing missing type field for tool: ${tool.name || key}`);
-          tool.inputSchema.type = 'object';
+          tool.inputSchema.type = "object";
         }
       }
     }
@@ -61,8 +60,6 @@ export class VercelAIMiddleware {
     const metadata = (params as any)._observMetadata;
     const sessionId = (params as any)._observSessionId;
 
-    this._observ.log("VercelAI: wrapping generate call");
-
     // Extract model info
     const { provider, modelId } = this.extractModelInfo(model, params);
 
@@ -87,7 +84,6 @@ export class VercelAIMiddleware {
       const gatewayResponse = await this.callGateway(completionRequest);
 
       if (gatewayResponse.action === "cache_hit") {
-        this._observ.log("Cache hit! Returning cached response");
         // Convert cached content to Vercel AI SDK format
         return VercelResponseBuilder.buildGenerateResult(
           gatewayResponse.content!,
@@ -97,7 +93,6 @@ export class VercelAIMiddleware {
 
       // Cache miss - proceed with actual API call
       const traceId = gatewayResponse.trace_id;
-      this._observ.log(`Cache miss, trace_id: ${traceId}`);
 
       const startTime = Date.now();
       const result = await doGenerate();
@@ -121,8 +116,6 @@ export class VercelAIMiddleware {
     const metadata = (params as any)._observMetadata;
     const sessionId = (params as any)._observSessionId;
 
-    this._observ.log("VercelAI: wrapping stream call");
-
     // Extract model info
     const { provider, modelId } = this.extractModelInfo(model, params);
 
@@ -141,13 +134,11 @@ export class VercelAIMiddleware {
       metadata,
       sessionId
     );
-
     try {
       // Call gateway for cache check
       const gatewayResponse = await this.callGateway(completionRequest);
 
       if (gatewayResponse.action === "cache_hit") {
-        this._observ.log("Cache hit! Simulating stream from cached content");
         // Convert cached content to simulated stream
         return VercelResponseBuilder.simulateStream(
           gatewayResponse.content!,
@@ -157,7 +148,6 @@ export class VercelAIMiddleware {
 
       // Cache miss - proceed with actual streaming
       const traceId = gatewayResponse.trace_id;
-      this._observ.log(`Cache miss (streaming), trace_id: ${traceId}`);
 
       const startTime = Date.now();
       const result = await doStream();
@@ -206,7 +196,9 @@ export class VercelAIMiddleware {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
+        const errorText = await response
+          .text()
+          .catch(() => response.statusText);
         throw new Error(`Gateway error ${response.status}: ${errorText}`);
       }
 
@@ -230,8 +222,6 @@ export class VercelAIMiddleware {
     // Vercel AI SDK models have providerId and modelId properties
     const provider = model.provider || model.providerId || "unknown";
     const modelId = model.modelId || params.model || "unknown";
-
-    this._observ.log(`Extracted model info: ${provider}/${modelId}`);
 
     return { provider, modelId };
   }
@@ -302,7 +292,8 @@ export class VercelAIMiddleware {
     result: any,
     durationMs: number
   ): Promise<void> {
-    const content = result.text || "";
+    // Vercel AI SDK v5+ returns content, not text
+    const content = result.content || result.text || "";
     const tokensUsed = result.usage?.totalTokens || 0;
 
     await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed);

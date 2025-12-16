@@ -8,7 +8,7 @@ export class VercelResponseBuilder {
    */
   static buildGenerateResult(cachedContent: string, modelId: string): any {
     return {
-      text: cachedContent,
+      content: cachedContent, // Vercel AI SDK v5+ uses content, not text
       toolCalls: [],
       toolResults: [],
       finishReason: "stop",
