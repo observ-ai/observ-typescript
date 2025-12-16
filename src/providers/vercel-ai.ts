@@ -292,8 +292,24 @@ export class VercelAIMiddleware {
     result: any,
     durationMs: number
   ): Promise<void> {
-    // Vercel AI SDK v5+ returns content, not text
-    const content = result.content || result.text || "";
+    // Vercel AI SDK v5+ returns content as either:
+    // - A string (older versions or simple responses)
+    // - An array of content parts: [{ type: "text", text: "..." }, ...]
+    let content = "";
+
+    if (typeof result.content === "string") {
+      content = result.content;
+    } else if (Array.isArray(result.content)) {
+      // Extract text from content parts array
+      content = result.content
+        .filter((part: any) => part.type === "text" && part.text)
+        .map((part: any) => part.text)
+        .join("");
+    } else if (result.text) {
+      // Fallback to older text property
+      content = result.text;
+    }
+
     const tokensUsed = result.usage?.totalTokens || 0;
 
     await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed);
