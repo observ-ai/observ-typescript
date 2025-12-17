@@ -274,11 +274,13 @@ export class VercelAIMiddleware {
 
   /**
    * Extract token usage from stream chunks
+   * Vercel AI SDK provides promptTokens and completionTokens separately
    */
   private extractTokensFromChunks(chunks: any[]): number {
     for (const chunk of chunks) {
       if (chunk.type === "finish" && chunk.usage) {
-        return chunk.usage.totalTokens || 0;
+        const { promptTokens = 0, completionTokens = 0 } = chunk.usage;
+        return promptTokens + completionTokens;
       }
     }
     return 0;
@@ -292,25 +294,28 @@ export class VercelAIMiddleware {
     result: any,
     durationMs: number
   ): Promise<void> {
-    // Vercel AI SDK v5+ returns content as either:
-    // - A string (older versions or simple responses)
-    // - An array of content parts: [{ type: "text", text: "..." }, ...]
+    // Vercel AI SDK returns content in different formats:
+    // - result.text: primary text output (most common)
+    // - result.content: array of content parts in v5+ [{ type: "text", text: "..." }]
     let content = "";
 
-    if (typeof result.content === "string") {
+    // Try result.text first (most common for text generation)
+    if (result.text) {
+      content = result.text;
+    } else if (typeof result.content === "string") {
       content = result.content;
     } else if (Array.isArray(result.content)) {
-      // Extract text from content parts array
+      // Extract text from content parts array (v5+ format)
       content = result.content
         .filter((part: any) => part.type === "text" && part.text)
         .map((part: any) => part.text)
         .join("");
-    } else if (result.text) {
-      // Fallback to older text property
-      content = result.text;
     }
 
-    const tokensUsed = result.usage?.totalTokens || 0;
+    // Vercel AI SDK provides promptTokens and completionTokens separately
+    const promptTokens = result.usage?.promptTokens || 0;
+    const completionTokens = result.usage?.completionTokens || 0;
+    const tokensUsed = promptTokens + completionTokens;
 
     await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed);
   }
