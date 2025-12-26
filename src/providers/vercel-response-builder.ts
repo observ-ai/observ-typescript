@@ -19,8 +19,8 @@ export class VercelResponseBuilder {
       toolResults: [],
       finishReason: "stop",
       usage: {
-        promptTokens: 0,
-        completionTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
         totalTokens: 0,
       },
       warnings: [],
@@ -55,7 +55,8 @@ export class VercelResponseBuilder {
         // Send the complete cached content as a single chunk
         controller.enqueue({
           type: "text-delta" as const,
-          textDelta: cachedContent,
+          id: "cached-text-0",
+          delta: cachedContent,
         });
 
         // Send finish event
@@ -63,11 +64,10 @@ export class VercelResponseBuilder {
           type: "finish" as const,
           finishReason: "stop" as const,
           usage: {
-            promptTokens: 0,
-            completionTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
             totalTokens: 0,
           },
-          logprobs: undefined,
         });
 
         controller.close();

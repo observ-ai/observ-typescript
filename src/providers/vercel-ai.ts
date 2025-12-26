@@ -261,12 +261,13 @@ export class VercelAIMiddleware {
 
   /**
    * Extract text content from stream chunks
+   * Vercel AI SDK uses 'delta' property (not 'textDelta') for text-delta chunks
    */
   private extractContentFromChunks(chunks: any[]): string {
     let content = "";
     for (const chunk of chunks) {
-      if (chunk.type === "text-delta" && chunk.textDelta) {
-        content += chunk.textDelta;
+      if (chunk.type === "text-delta" && chunk.delta) {
+        content += chunk.delta;
       }
     }
     return content;
@@ -274,13 +275,20 @@ export class VercelAIMiddleware {
 
   /**
    * Extract token usage from stream chunks
-   * Vercel AI SDK provides promptTokens and completionTokens separately
+   * Vercel AI SDK uses inputTokens/outputTokens (not promptTokens/completionTokens)
+   * The 'finish' chunk has totalUsage, while 'finish-step' has usage
    */
   private extractTokensFromChunks(chunks: any[]): number {
     for (const chunk of chunks) {
-      if (chunk.type === "finish" && chunk.usage) {
-        const { promptTokens = 0, completionTokens = 0 } = chunk.usage;
-        return promptTokens + completionTokens;
+      // Check 'finish' chunk which has totalUsage (aggregated across all steps)
+      if (chunk.type === "finish" && chunk.totalUsage) {
+        const { inputTokens = 0, outputTokens = 0 } = chunk.totalUsage;
+        return inputTokens + outputTokens;
+      }
+      // Fallback to 'finish-step' chunk which has usage (per-step)
+      if (chunk.type === "finish-step" && chunk.usage) {
+        const { inputTokens = 0, outputTokens = 0 } = chunk.usage;
+        return inputTokens + outputTokens;
       }
     }
     return 0;
@@ -312,10 +320,10 @@ export class VercelAIMiddleware {
         .join("");
     }
 
-    // Vercel AI SDK provides promptTokens and completionTokens separately
-    const promptTokens = result.usage?.promptTokens || 0;
-    const completionTokens = result.usage?.completionTokens || 0;
-    const tokensUsed = promptTokens + completionTokens;
+    // Vercel AI SDK uses inputTokens/outputTokens (not promptTokens/completionTokens)
+    const inputTokens = result.usage?.inputTokens || 0;
+    const outputTokens = result.usage?.outputTokens || 0;
+    const tokensUsed = inputTokens + outputTokens;
 
     await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed);
   }
