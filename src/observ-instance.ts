@@ -8,7 +8,10 @@ export interface ObservInstance {
   environment: string;
   endpoint: string;
   debug: boolean;
+  jwtToken?: string;
   log(message: string): void;
+  setJWTToken(token: string): void;
+  getAuthHeader(): string;
   sendCallbackAnthropic(
     traceId: string,
     response: any,

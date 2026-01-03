@@ -32,11 +32,12 @@ export class Observ implements ObservInstance {
   public readonly endpoint: string;
   public readonly environment: string;
   public readonly debug: boolean;
+  public jwtToken?: string;
 
   constructor(options: ObservOptions) {
     this.apiKey = options.apiKey;
     this.projectId = options.projectId || "default";
-    this.recall = options.recall || false;
+    this.recall = options.recall || true;
     this.environment = options.environment || "production";
     this.endpoint = options.endpoint || "https://api.observ.dev";
     this.debug = options.debug || false;
@@ -47,6 +48,18 @@ export class Observ implements ObservInstance {
     if (this.debug) {
       console.log(`[Observ] ${message}`);
     }
+  }
+  /** Set JWT token for session reuse */
+  setJWTToken(token: string): void {
+    this.jwtToken = token;
+  }
+
+  /** Get authorization header (JWT if available, otherwise API key) */
+  getAuthHeader(): string {
+    if (this.jwtToken) {
+      return `Bearer ${this.jwtToken}`;
+    }
+    return `Bearer ${this.apiKey}`;
   }
 
   anthropic<T extends { messages: any }>(client: T): T & AnthropicClient {
@@ -140,9 +153,7 @@ export class Observ implements ObservInstance {
       }) as T;
     } catch (error: any) {
       this.log(`Failed to wrap Vercel AI SDK model: ${error.message}`);
-      this.log(
-        "Make sure you have 'ai' package installed: npm install ai"
-      );
+      this.log("Make sure you have 'ai' package installed: npm install ai");
       throw new Error(
         "Vercel AI SDK ('ai' package) is required to use wrap() method"
       );

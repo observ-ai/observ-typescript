@@ -13,7 +13,7 @@ export class MistralChatCompletionsWrapper {
   private _originalCreate: (
     params: MistralCompletionCreateParams
   ) => Promise<MistralCompletion>;
-  private _wt: ObservInstance;
+  private _ob: ObservInstance;
   private _metadata: Record<string, any> = {};
   private _sessionId?: string;
 
@@ -24,7 +24,7 @@ export class MistralChatCompletionsWrapper {
     observInstance: ObservInstance
   ) {
     this._originalCreate = originalCreate;
-    this._wt = observInstance;
+    this._ob = observInstance;
   }
 
   withMetadata(metadata: Record<string, any>): this {
@@ -53,8 +53,8 @@ export class MistralChatCompletionsWrapper {
       "mistral",
       model,
       gatewayMessages,
-      this._wt.recall,
-      this._wt.environment,
+      this._ob.recall,
+      this._ob.environment,
       metadata,
       sessionId
     );
@@ -67,25 +67,31 @@ export class MistralChatCompletionsWrapper {
 
       let response: Response;
       try {
-        response = await fetch(`${this._wt.endpoint}/v1/llm/complete`, {
+        response = await fetch(`${this._ob.endpoint}/v1/llm/complete`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${this._wt.apiKey}`,
+            Authorization: this._ob.getAuthHeader(),
             "Content-Type": "application/json",
           },
           body: JSON.stringify(completionRequest),
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
+
+        // Check for new JWT token in response headers
+        const sessionToken = response.headers.get("x-session-token");
+        if (sessionToken) {
+          this._ob.setJWTToken(sessionToken);
+        }
       } catch (fetchError: any) {
         clearTimeout(timeoutId);
         if (fetchError.name === "AbortError") {
           throw new Error(
-            `Gateway timeout after 10s - is Observ running at ${this._wt.endpoint}?`
+            `Gateway timeout after 10s - is Observ running at ${this._ob.endpoint}?`
           );
         }
         throw new Error(
-          `Gateway connection error: ${fetchError.message} - is Observ running at ${this._wt.endpoint}?`
+          `Gateway connection error: ${fetchError.message} - is Observ running at ${this._ob.endpoint}?`
         );
       }
 
@@ -131,7 +137,7 @@ export class MistralChatCompletionsWrapper {
       const durationMs = Date.now() - startTime;
 
       // Fire-and-forget callback (don't await)
-      this._wt
+      this._ob
         .sendCallbackMistral(traceId, actualResponse, durationMs)
         .catch(() => {
           // Silently ignore callback errors
@@ -139,8 +145,8 @@ export class MistralChatCompletionsWrapper {
 
       return actualResponse;
     } catch (error: any) {
-      this._wt.log(`Gateway error: ${error.message || error}`);
-      this._wt.log("Falling back to direct Mistral API call...");
+      this._ob.log(`Gateway error: ${error.message || error}`);
+      this._ob.log("Falling back to direct Mistral API call...");
       return await this._originalCreate(params);
     }
   }
