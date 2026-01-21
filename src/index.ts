@@ -202,13 +202,13 @@ export class Observ implements ObservInstance {
         signal: controller.signal,
       })
         .catch((err: unknown) => {
-          // Ignore callback errors - they're fire-and-forget
+          // Silently ignore callback errors - they're fire-and-forget
         })
         .finally(() => {
           clearTimeout(timeoutId);
         });
     } catch (error) {
-      console.error(`Observ callback error: ${error}`);
+      // Silently ignore callback errors
     }
   }
 

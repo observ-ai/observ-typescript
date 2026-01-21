@@ -1,6 +1,6 @@
 {
   "name": "observ-sdk",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": "Observ",
   "repository": {
     "type": "git",
@@ -14,7 +14,12 @@
     "ai": "^5.0.106",
     "openai": "^4.28.0",
     "typescript": "^5.3.3",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "semantic-release": "^22.0.0",
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/git": "^10.0.0",
+    "@semantic-release/github": "^9.0.0",
+    "@semantic-release/npm": "^11.0.0"
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": ">=0.24.0",
@@ -78,7 +83,8 @@
     "lint": "echo 'Add ESLint configuration for linting'",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "semantic-release": "semantic-release"
   },
   "type": "module",
   "types": "./dist/index.d.ts"

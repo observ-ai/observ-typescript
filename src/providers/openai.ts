@@ -1,12 +1,12 @@
 import type { ObservInstance } from "../observ-instance";
-import type { OpenAICompletion, OpenAICompletionCreateParams } from "../types";
+import type { OpenAICompletion, OpenAICompletionCreateParams, OpenAIChainable } from "../types";
 import {
   buildCompletionRequest,
   convertMessagesToGatewayFormat,
   type GatewayResponse,
 } from "./base";
 
-export class OpenAIChatCompletionsWrapper {
+export class OpenAIChatCompletionsWrapper implements OpenAIChainable {
   private _originalCreate: (
     params: OpenAICompletionCreateParams
   ) => Promise<OpenAICompletion>;
@@ -24,12 +24,12 @@ export class OpenAIChatCompletionsWrapper {
     this._ob = observInstance;
   }
 
-  withMetadata(metadata: Record<string, any>): this {
+  withMetadata(metadata: Record<string, any>): OpenAIChainable {
     this._metadata = metadata;
     return this;
   }
 
-  withSessionId(sessionId: string): this {
+  withSessionId(sessionId: string): OpenAIChainable {
     this._sessionId = sessionId;
     return this;
   }

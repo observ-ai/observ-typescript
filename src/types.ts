@@ -14,8 +14,14 @@ export interface WithSessionId<T> {
 }
 
 // Anthropic types
+export interface AnthropicChainable {
+  withMetadata(metadata: Record<string, any>): AnthropicChainable;
+  withSessionId(sessionId: string): AnthropicChainable;
+  create(params: AnthropicMessageCreateParams): Promise<AnthropicMessage>;
+}
+
 export interface AnthropicClient {
-  messages: AnthropicMessages & WithMetadata<AnthropicMessages> & WithSessionId<AnthropicMessages>;
+  messages: AnthropicChainable;
 }
 
 export interface AnthropicMessages {
@@ -46,9 +52,15 @@ export interface AnthropicMessage {
 }
 
 // OpenAI types
+export interface OpenAIChainable {
+  withMetadata(metadata: Record<string, any>): OpenAIChainable;
+  withSessionId(sessionId: string): OpenAIChainable;
+  create(params: OpenAICompletionCreateParams): Promise<OpenAICompletion>;
+}
+
 export interface OpenAIClient {
   chat: {
-    completions: OpenAICompletions & WithMetadata<OpenAICompletions> & WithSessionId<OpenAICompletions>;
+    completions: OpenAIChainable;
   };
 }
 
@@ -85,9 +97,15 @@ export interface OpenAICompletion {
 }
 
 // Mistral types
+export interface MistralChainable {
+  withMetadata(metadata: Record<string, any>): MistralChainable;
+  withSessionId(sessionId: string): MistralChainable;
+  create(params: MistralCompletionCreateParams): Promise<MistralCompletion>;
+}
+
 export interface MistralClient {
   chat: {
-    completions: MistralCompletions & WithMetadata<MistralCompletions> & WithSessionId<MistralCompletions>;
+    completions: MistralChainable;
   };
 }
 

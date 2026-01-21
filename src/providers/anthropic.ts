@@ -1,12 +1,12 @@
 import type { ObservInstance } from "../observ-instance";
-import type { AnthropicMessage, AnthropicMessageCreateParams } from "../types";
+import type { AnthropicMessage, AnthropicMessageCreateParams, AnthropicChainable } from "../types";
 import {
   buildCompletionRequest,
   convertMessagesToGatewayFormat,
   type GatewayResponse,
 } from "./base";
 
-export class AnthropicMessagesWrapper {
+export class AnthropicMessagesWrapper implements AnthropicChainable {
   private _originalCreate: (
     params: AnthropicMessageCreateParams
   ) => Promise<AnthropicMessage>;
@@ -24,12 +24,12 @@ export class AnthropicMessagesWrapper {
     this._ob = observInstance;
   }
 
-  withMetadata(metadata: Record<string, any>): this {
+  withMetadata(metadata: Record<string, any>): AnthropicChainable {
     this._metadata = metadata;
     return this;
   }
 
-  withSessionId(sessionId: string): this {
+  withSessionId(sessionId: string): AnthropicChainable {
     this._sessionId = sessionId;
     return this;
   }

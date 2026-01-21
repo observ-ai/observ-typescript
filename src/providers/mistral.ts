@@ -2,6 +2,7 @@ import type { ObservInstance } from "../observ-instance";
 import type {
   MistralCompletion,
   MistralCompletionCreateParams,
+  MistralChainable,
 } from "../types";
 import {
   buildCompletionRequest,
@@ -9,7 +10,7 @@ import {
   type GatewayResponse,
 } from "./base";
 
-export class MistralChatCompletionsWrapper {
+export class MistralChatCompletionsWrapper implements MistralChainable {
   private _originalCreate: (
     params: MistralCompletionCreateParams
   ) => Promise<MistralCompletion>;
@@ -27,12 +28,12 @@ export class MistralChatCompletionsWrapper {
     this._ob = observInstance;
   }
 
-  withMetadata(metadata: Record<string, any>): this {
+  withMetadata(metadata: Record<string, any>): MistralChainable {
     this._metadata = metadata;
     return this;
   }
 
-  withSessionId(sessionId: string): this {
+  withSessionId(sessionId: string): MistralChainable {
     this._sessionId = sessionId;
     return this;
   }
