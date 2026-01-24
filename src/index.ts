@@ -172,16 +172,17 @@ export class Observ implements ObservInstance {
           : "";
 
       // Extract tokens - Anthropic provides input_tokens and output_tokens separately
-      let tokensUsed = 0;
+      let inputTokens = 0;
+      let outputTokens = 0;
       if (response.usage) {
-        if (
-          typeof response.usage.input_tokens === "number" &&
-          typeof response.usage.output_tokens === "number"
-        ) {
-          tokensUsed =
-            response.usage.input_tokens + response.usage.output_tokens;
+        if (typeof response.usage.input_tokens === "number") {
+          inputTokens = response.usage.input_tokens;
+        }
+        if (typeof response.usage.output_tokens === "number") {
+          outputTokens = response.usage.output_tokens;
         }
       }
+      const tokensUsed = inputTokens + outputTokens;
 
       // Extract tool calls from Anthropic response
       const toolCalls: Array<{
@@ -211,6 +212,8 @@ export class Observ implements ObservInstance {
         tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         duration_ms: durationMs,
         tokens_used: tokensUsed,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
       };
 
       const controller = new AbortController();
@@ -246,7 +249,10 @@ export class Observ implements ObservInstance {
           ? response.choices[0].message.content || ""
           : "";
 
-      const tokensUsed = response.usage?.total_tokens || 0;
+      // Extract tokens - OpenAI provides prompt_tokens and completion_tokens
+      const inputTokens = response.usage?.prompt_tokens || 0;
+      const outputTokens = response.usage?.completion_tokens || 0;
+      const tokensUsed = response.usage?.total_tokens || inputTokens + outputTokens;
 
       // Extract tool calls from OpenAI response
       const toolCalls: Array<{
@@ -285,6 +291,8 @@ export class Observ implements ObservInstance {
         tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         duration_ms: durationMs,
         tokens_used: tokensUsed,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
       };
 
       const controller = new AbortController();
@@ -320,13 +328,18 @@ export class Observ implements ObservInstance {
           ? response.choices[0].message.content || ""
           : "";
 
-      const tokensUsed = response.usage?.total_tokens || 0;
+      // Extract tokens - Mistral provides prompt_tokens and completion_tokens
+      const inputTokens = response.usage?.prompt_tokens || 0;
+      const outputTokens = response.usage?.completion_tokens || 0;
+      const tokensUsed = response.usage?.total_tokens || inputTokens + outputTokens;
 
       const callback: CompletionCallback = {
         trace_id: traceId,
         content,
         duration_ms: durationMs,
         tokens_used: tokensUsed,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
       };
 
       const controller = new AbortController();

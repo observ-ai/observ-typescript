@@ -52,7 +52,9 @@ export interface CompletionCallback {
     };
   }>;
   duration_ms: number;
-  tokens_used: number;
+  tokens_used: number; // Total tokens (input + output) - kept for backward compatibility
+  input_tokens: number; // Input/prompt tokens
+  output_tokens: number; // Output/completion tokens
   error?: string;
 }
 

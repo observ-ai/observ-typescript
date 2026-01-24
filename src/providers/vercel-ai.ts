@@ -244,10 +244,10 @@ export class VercelAIMiddleware {
       flush: () => {
         const durationMs = Date.now() - startTime;
         const content = this.extractContentFromChunks(chunks);
-        const tokensUsed = this.extractTokensFromChunks(chunks);
+        const { inputTokens, outputTokens } = this.extractTokensFromChunks(chunks);
 
         // Send callback
-        this.sendStreamCallback(traceId, content, durationMs, tokensUsed).catch(
+        this.sendStreamCallback(traceId, content, durationMs, inputTokens, outputTokens).catch(
           () => {}
         );
       },
@@ -277,18 +277,38 @@ export class VercelAIMiddleware {
    * Extract token usage from stream chunks
    * Vercel AI SDK uses inputTokens/outputTokens (not promptTokens/completionTokens)
    * The 'finish' chunk has totalUsage, while 'finish-step' has usage
+   * v5 returns objects with { total: number }, v4 returns plain numbers
    */
-  private extractTokensFromChunks(chunks: any[]): number {
+  private extractTokensFromChunks(chunks: any[]): { inputTokens: number; outputTokens: number } {
     for (const chunk of chunks) {
       // Check 'finish' chunk which has totalUsage (aggregated across all steps)
       if (chunk.type === "finish" && chunk.totalUsage) {
-        const { inputTokens = 0, outputTokens = 0 } = chunk.totalUsage;
-        return inputTokens + outputTokens;
+        const inputTokens = this.extractTokenCount(chunk.totalUsage.inputTokens);
+        const outputTokens = this.extractTokenCount(chunk.totalUsage.outputTokens);
+        return { inputTokens, outputTokens };
       }
       // Fallback to 'finish-step' chunk which has usage (per-step)
       if (chunk.type === "finish-step" && chunk.usage) {
-        const { inputTokens = 0, outputTokens = 0 } = chunk.usage;
-        return inputTokens + outputTokens;
+        const inputTokens = this.extractTokenCount(chunk.usage.inputTokens);
+        const outputTokens = this.extractTokenCount(chunk.usage.outputTokens);
+        return { inputTokens, outputTokens };
+      }
+    }
+    return { inputTokens: 0, outputTokens: 0 };
+  }
+
+  /**
+   * Extract numeric token count from either a plain number or an object with { total: number }
+   * Handles both Vercel AI SDK v4 (plain numbers) and v5 (objects) formats
+   */
+  private extractTokenCount(value: unknown): number {
+    if (typeof value === "number") {
+      return value;
+    }
+    if (value && typeof value === "object" && "total" in value) {
+      const total = (value as { total: unknown }).total;
+      if (typeof total === "number") {
+        return total;
       }
     }
     return 0;
@@ -320,10 +340,10 @@ export class VercelAIMiddleware {
         .join("");
     }
 
-    // Vercel AI SDK uses inputTokens/outputTokens (not promptTokens/completionTokens)
-    const inputTokens = result.usage?.inputTokens || 0;
-    const outputTokens = result.usage?.outputTokens || 0;
-    const tokensUsed = inputTokens + outputTokens;
+    // Vercel AI SDK v5 uses inputTokens/outputTokens as objects with { total: number }
+    // Handle both v4 (plain numbers) and v5 (objects) formats
+    const inputTokens = this.extractTokenCount(result.usage?.inputTokens);
+    const outputTokens = this.extractTokenCount(result.usage?.outputTokens);
 
     // Extract tool calls from Vercel AI SDK response
     // Vercel AI SDK returns tool calls in result.toolCalls or result.response?.messages
@@ -376,7 +396,8 @@ export class VercelAIMiddleware {
       traceId,
       content,
       durationMs,
-      tokensUsed,
+      inputTokens,
+      outputTokens,
       toolCalls.length > 0 ? toolCalls : undefined
     );
   }
@@ -388,10 +409,11 @@ export class VercelAIMiddleware {
     traceId: string,
     content: string,
     durationMs: number,
-    tokensUsed: number
+    inputTokens: number,
+    outputTokens: number
   ): Promise<void> {
     // For streaming, tool calls would be in chunks - we'll handle this in a future update
-    await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed, undefined);
+    await this.sendCallbackToGateway(traceId, content, durationMs, inputTokens, outputTokens, undefined);
   }
 
   /**
@@ -401,7 +423,8 @@ export class VercelAIMiddleware {
     traceId: string,
     content: string,
     durationMs: number,
-    tokensUsed: number,
+    inputTokens: number,
+    outputTokens: number,
     toolCalls?: Array<{
       id: string;
       type: string;
@@ -413,7 +436,9 @@ export class VercelAIMiddleware {
       content,
       tool_calls: toolCalls,
       duration_ms: durationMs,
-      tokens_used: tokensUsed,
+      tokens_used: inputTokens + outputTokens,
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
     };
 
     const controller = new AbortController();
