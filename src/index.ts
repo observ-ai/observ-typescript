@@ -187,7 +187,7 @@ export class Observ implements ObservInstance {
       const toolCalls: Array<{
         id: string;
         type: string;
-        function: { name: string; arguments: string };
+        function: { name: string; arguments: any };
       }> = [];
       
       if (response.content && response.content.length > 0) {
@@ -198,7 +198,7 @@ export class Observ implements ObservInstance {
               type: "function",
               function: {
                 name: item.name,
-                arguments: JSON.stringify(item.input || {}),
+                arguments: item.input || {},
               },
             });
           }
@@ -252,19 +252,27 @@ export class Observ implements ObservInstance {
       const toolCalls: Array<{
         id: string;
         type: string;
-        function: { name: string; arguments: string };
+        function: { name: string; arguments: any };
       }> = [];
       
       if (response.choices && response.choices.length > 0) {
         const choice = response.choices[0];
         if (choice.message.tool_calls) {
           for (const tc of choice.message.tool_calls) {
+            // Parse arguments string to object
+            let args: any = {};
+            try {
+              args = JSON.parse(tc.function.arguments);
+            } catch {
+              args = { raw: tc.function.arguments };
+            }
+            
             toolCalls.push({
               id: tc.id,
               type: tc.type,
               function: {
                 name: tc.function.name,
-                arguments: tc.function.arguments,
+                arguments: args,
               },
             });
           }

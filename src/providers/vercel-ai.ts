@@ -330,7 +330,7 @@ export class VercelAIMiddleware {
     const toolCalls: Array<{
       id: string;
       type: string;
-      function: { name: string; arguments: string };
+      function: { name: string; arguments: any };
     }> = [];
     
     // Check if result has toolCalls directly (from steps)
@@ -342,7 +342,7 @@ export class VercelAIMiddleware {
             type: "function",
             function: {
               name: tc.toolName,
-              arguments: JSON.stringify(tc.args || {}),
+              arguments: tc.args || {},
             },
           });
         }
@@ -362,7 +362,7 @@ export class VercelAIMiddleware {
                   type: "function",
                   function: {
                     name: part.toolName,
-                    arguments: JSON.stringify(part.args || {}),
+                    arguments: part.args || {},
                   },
                 });
               }
@@ -405,7 +405,7 @@ export class VercelAIMiddleware {
     toolCalls?: Array<{
       id: string;
       type: string;
-      function: { name: string; arguments: string };
+      function: { name: string; arguments: any };
     }>
   ): Promise<void> {
     const callback: CompletionCallback = {

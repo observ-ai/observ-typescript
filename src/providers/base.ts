@@ -48,7 +48,7 @@ export interface CompletionCallback {
     type: string;
     function: {
       name: string;
-      arguments: string;
+      arguments: any; // Can be object or JSON string
     };
   }>;
   duration_ms: number;
