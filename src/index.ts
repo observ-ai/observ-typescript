@@ -183,9 +183,32 @@ export class Observ implements ObservInstance {
         }
       }
 
+      // Extract tool calls from Anthropic response
+      const toolCalls: Array<{
+        id: string;
+        type: string;
+        function: { name: string; arguments: string };
+      }> = [];
+      
+      if (response.content && response.content.length > 0) {
+        for (const item of response.content) {
+          if (item.type === "tool_use" && item.id && item.name) {
+            toolCalls.push({
+              id: item.id,
+              type: "function",
+              function: {
+                name: item.name,
+                arguments: JSON.stringify(item.input || {}),
+              },
+            });
+          }
+        }
+      }
+
       const callback: CompletionCallback = {
         trace_id: traceId,
         content,
+        tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         duration_ms: durationMs,
         tokens_used: tokensUsed,
       };
@@ -225,9 +248,33 @@ export class Observ implements ObservInstance {
 
       const tokensUsed = response.usage?.total_tokens || 0;
 
+      // Extract tool calls from OpenAI response
+      const toolCalls: Array<{
+        id: string;
+        type: string;
+        function: { name: string; arguments: string };
+      }> = [];
+      
+      if (response.choices && response.choices.length > 0) {
+        const choice = response.choices[0];
+        if (choice.message.tool_calls) {
+          for (const tc of choice.message.tool_calls) {
+            toolCalls.push({
+              id: tc.id,
+              type: tc.type,
+              function: {
+                name: tc.function.name,
+                arguments: tc.function.arguments,
+              },
+            });
+          }
+        }
+      }
+
       const callback: CompletionCallback = {
         trace_id: traceId,
         content,
+        tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         duration_ms: durationMs,
         tokens_used: tokensUsed,
       };

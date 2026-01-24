@@ -41,7 +41,13 @@ export interface AnthropicMessage {
   id: string;
   type: string;
   role: string;
-  content: Array<{ type: string; text: string }>;
+  content: Array<{ 
+    type: string; 
+    text?: string;
+    id?: string;
+    name?: string;
+    input?: any;
+  }>;
   model: string;
   stop_reason: string | null;
   stop_sequence: string | null;
@@ -86,6 +92,14 @@ export interface OpenAICompletion {
     message: {
       role: string;
       content: string | null;
+      tool_calls?: Array<{
+        id: string;
+        type: string;
+        function: {
+          name: string;
+          arguments: string;
+        };
+      }>;
     };
     finish_reason: string | null;
   }>;

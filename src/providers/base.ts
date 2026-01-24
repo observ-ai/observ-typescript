@@ -43,6 +43,14 @@ export interface GatewayResponse {
 export interface CompletionCallback {
   trace_id: string;
   content: string;
+  tool_calls?: Array<{
+    id: string;
+    type: string;
+    function: {
+      name: string;
+      arguments: string;
+    };
+  }>;
   duration_ms: number;
   tokens_used: number;
   error?: string;
