@@ -325,7 +325,60 @@ export class VercelAIMiddleware {
     const outputTokens = result.usage?.outputTokens || 0;
     const tokensUsed = inputTokens + outputTokens;
 
-    await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed);
+    // Extract tool calls from Vercel AI SDK response
+    // Vercel AI SDK returns tool calls in result.toolCalls or result.response?.messages
+    const toolCalls: Array<{
+      id: string;
+      type: string;
+      function: { name: string; arguments: string };
+    }> = [];
+    
+    // Check if result has toolCalls directly (from steps)
+    if (result.toolCalls && Array.isArray(result.toolCalls)) {
+      for (const tc of result.toolCalls) {
+        if (tc.toolCallId && tc.toolName) {
+          toolCalls.push({
+            id: tc.toolCallId,
+            type: "function",
+            function: {
+              name: tc.toolName,
+              arguments: JSON.stringify(tc.args || {}),
+            },
+          });
+        }
+      }
+    }
+    
+    // Also check in response.messages for tool-call messages
+    if (result.response?.messages && Array.isArray(result.response.messages)) {
+      for (const msg of result.response.messages) {
+        if (msg.role === "assistant" && Array.isArray(msg.content)) {
+          for (const part of msg.content) {
+            if (part.type === "tool-call" && part.toolCallId && part.toolName) {
+              // Avoid duplicates
+              if (!toolCalls.find((tc) => tc.id === part.toolCallId)) {
+                toolCalls.push({
+                  id: part.toolCallId,
+                  type: "function",
+                  function: {
+                    name: part.toolName,
+                    arguments: JSON.stringify(part.args || {}),
+                  },
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    await this.sendCallbackToGateway(
+      traceId,
+      content,
+      durationMs,
+      tokensUsed,
+      toolCalls.length > 0 ? toolCalls : undefined
+    );
   }
 
   /**
@@ -337,7 +390,8 @@ export class VercelAIMiddleware {
     durationMs: number,
     tokensUsed: number
   ): Promise<void> {
-    await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed);
+    // For streaming, tool calls would be in chunks - we'll handle this in a future update
+    await this.sendCallbackToGateway(traceId, content, durationMs, tokensUsed, undefined);
   }
 
   /**
@@ -347,11 +401,17 @@ export class VercelAIMiddleware {
     traceId: string,
     content: string,
     durationMs: number,
-    tokensUsed: number
+    tokensUsed: number,
+    toolCalls?: Array<{
+      id: string;
+      type: string;
+      function: { name: string; arguments: string };
+    }>
   ): Promise<void> {
     const callback: CompletionCallback = {
       trace_id: traceId,
       content,
+      tool_calls: toolCalls,
       duration_ms: durationMs,
       tokens_used: tokensUsed,
     };
