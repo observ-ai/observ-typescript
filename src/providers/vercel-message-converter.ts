@@ -48,16 +48,30 @@ export class VercelMessageConverter {
     let content = "";
     let toolCallId = "";
     let toolName = "";
+    const extractedToolCalls: any[] = [];
 
     if (typeof msg.content === "string") {
       content = msg.content;
     } else if (Array.isArray(msg.content)) {
-      // Multi-part content - could be text, tool results, etc.
+      // Multi-part content - could be text, tool calls, tool results, etc.
       const textParts: string[] = [];
       
       for (const part of msg.content) {
         if (part.type === "text" && part.text) {
           textParts.push(part.text);
+        }
+        // Handle tool call parts (Vercel AI SDK format for assistant messages)
+        if (part.type === "tool-call" || part.type === "tool_call") {
+          extractedToolCalls.push({
+            id: part.toolCallId || part.id,
+            type: "function",
+            function: {
+              name: part.toolName || part.name,
+              arguments: typeof part.args === "string" 
+                ? part.args 
+                : JSON.stringify(part.args || {}),
+            },
+          });
         }
         // Handle tool result parts (Vercel AI SDK format)
         if (part.type === "tool-result" || part.type === "tool_result") {
@@ -88,8 +102,12 @@ export class VercelMessageConverter {
     // Build base message
     const gatewayMsg: GatewayMessage = { role, content };
 
-    // Handle tool calls (for assistant messages with tool invocations)
-    if (msg.toolCalls && Array.isArray(msg.toolCalls)) {
+    // Handle tool calls from content array (Vercel AI SDK format)
+    if (extractedToolCalls.length > 0) {
+      gatewayMsg.tool_calls = extractedToolCalls;
+    }
+    // Also check for tool calls at message root level
+    else if (msg.toolCalls && Array.isArray(msg.toolCalls)) {
       gatewayMsg.tool_calls = msg.toolCalls.map((tc: any) => ({
         id: tc.toolCallId || tc.id,
         type: tc.type || "function",
