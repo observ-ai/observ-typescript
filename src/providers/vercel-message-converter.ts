@@ -46,15 +46,40 @@ export class VercelMessageConverter {
 
     // Handle different content formats
     let content = "";
+    let toolCallId = "";
+    let toolName = "";
 
     if (typeof msg.content === "string") {
       content = msg.content;
     } else if (Array.isArray(msg.content)) {
-      // Multi-part content (text + images)
-      content = msg.content
-        .filter((part: any) => part.type === "text")
-        .map((part: any) => part.text)
-        .join("\n");
+      // Multi-part content - could be text, tool results, etc.
+      const textParts: string[] = [];
+      
+      for (const part of msg.content) {
+        if (part.type === "text" && part.text) {
+          textParts.push(part.text);
+        }
+        // Handle tool result parts (Vercel AI SDK format)
+        if (part.type === "tool-result" || part.type === "tool_result") {
+          toolCallId = part.toolCallId || part.tool_use_id || "";
+          toolName = part.toolName || "";
+          // Extract result content
+          if (part.result !== undefined) {
+            content = typeof part.result === "string" 
+              ? part.result 
+              : JSON.stringify(part.result);
+          } else if (part.content !== undefined) {
+            content = typeof part.content === "string"
+              ? part.content
+              : JSON.stringify(part.content);
+          }
+        }
+      }
+      
+      // If we found text parts and no tool result content, use text
+      if (textParts.length > 0 && !content) {
+        content = textParts.join("\n");
+      }
     } else if (msg.content && typeof msg.content === "object") {
       // Object content
       content = JSON.stringify(msg.content);
@@ -77,14 +102,33 @@ export class VercelMessageConverter {
       }));
     }
 
-    // Handle tool result messages (Vercel AI SDK format)
-    if (msg.toolCallId) {
+    // Handle tool result messages - check multiple possible field names
+    // Priority: extracted from content > direct field > Vercel AI SDK format
+    if (toolCallId) {
+      gatewayMsg.tool_call_id = toolCallId;
+    } else if (msg.toolCallId) {
       gatewayMsg.tool_call_id = msg.toolCallId;
+    } else if (msg.tool_call_id) {
+      gatewayMsg.tool_call_id = msg.tool_call_id;
     }
 
     // Handle tool name (for tool result messages)
-    if (msg.toolName) {
+    if (toolName) {
+      gatewayMsg.name = toolName;
+    } else if (msg.toolName) {
       gatewayMsg.name = msg.toolName;
+    } else if (msg.name) {
+      gatewayMsg.name = msg.name;
+    }
+
+    // For tool role messages, also extract result from msg.result if present
+    if (role === "tool" && !content) {
+      if (msg.result !== undefined) {
+        content = typeof msg.result === "string"
+          ? msg.result
+          : JSON.stringify(msg.result);
+        gatewayMsg.content = content;
+      }
     }
 
     return gatewayMsg;
