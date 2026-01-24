@@ -60,6 +60,33 @@ export class VercelMessageConverter {
       content = JSON.stringify(msg.content);
     }
 
-    return { role, content };
+    // Build base message
+    const gatewayMsg: GatewayMessage = { role, content };
+
+    // Handle tool calls (for assistant messages with tool invocations)
+    if (msg.toolCalls && Array.isArray(msg.toolCalls)) {
+      gatewayMsg.tool_calls = msg.toolCalls.map((tc: any) => ({
+        id: tc.toolCallId || tc.id,
+        type: tc.type || "function",
+        function: {
+          name: tc.toolName || tc.function?.name,
+          arguments: typeof tc.args === "string" 
+            ? tc.args 
+            : JSON.stringify(tc.args || tc.function?.arguments || {}),
+        },
+      }));
+    }
+
+    // Handle tool result messages (Vercel AI SDK format)
+    if (msg.toolCallId) {
+      gatewayMsg.tool_call_id = msg.toolCallId;
+    }
+
+    // Handle tool name (for tool result messages)
+    if (msg.toolName) {
+      gatewayMsg.name = msg.toolName;
+    }
+
+    return gatewayMsg;
   }
 }
